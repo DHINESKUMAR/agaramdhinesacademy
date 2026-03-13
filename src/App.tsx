@@ -1,8 +1,4 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
+import { useState, useEffect } from "react"; // இதைச் சேர்த்துள்ளேன்
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
 import WebView from "./pages/WebView";
@@ -18,23 +14,36 @@ import TermExam from "./pages/Admin/TermExam";
 import LiveClasses from "./pages/Admin/LiveClasses";
 import Youtube from "./pages/Admin/Youtube";
 import Attendances from "./pages/Admin/Attendances";
+import Staffs from "./pages/Admin/Staffs";
+import Subjects from "./pages/Admin/Subjects";
+import Timetable from "./pages/Admin/Timetable";
 import StudentDashboard from "./pages/Student/Dashboard";
-import ImageEditor from "./pages/AI/ImageEditor";
-import VoiceApp from "./pages/AI/VoiceApp";
-import VideoGenerator from "./pages/AI/VideoGenerator";
-import SearchGrounding from "./pages/AI/SearchGrounding";
+import StaffDashboard from "./pages/Staff/Dashboard";
 import { initDB } from "./lib/db";
 
 // Initialize mock database
 initDB();
 
 export default function App() {
+  // --- சேர்த்துள்ள மாற்றம் ஆரம்பம் ---
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  if (!isClient) {
+    return null; // பிரவுசர் லோட் ஆகும் வரை திரையில் எதுவும் காட்டாது (வெள்ளை திரை வராது)
+  }
+  // --- சேர்த்துள்ள மாற்றம் முடிவு ---
+
   return (
     <Router>
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/webview" element={<WebView />} />
         <Route path="/student-dashboard" element={<StudentDashboard />} />
+        <Route path="/staff-dashboard" element={<StaffDashboard />} />
 
         <Route path="/admin" element={<AdminDashboard />}>
           <Route index element={<AdminHome />} />
@@ -42,15 +51,10 @@ export default function App() {
           <Route path="homework" element={<Homework />} />
           <Route path="fees" element={<Fees />} />
           <Route path="settings" element={<Settings />} />
-          <Route path="ai-image" element={<ImageEditor />} />
-          <Route path="ai-voice" element={<VoiceApp />} />
-          <Route path="ai-video" element={<VideoGenerator />} />
-          <Route path="ai-search" element={<SearchGrounding />} />
           <Route path="courses" element={<Courses />} />
           <Route path="term-exam" element={<TermExam />} />
           <Route path="live-classes" element={<LiveClasses />} />
           <Route path="youtube" element={<Youtube />} />
-          {/* Placeholders for other routes */}
           <Route path="classes" element={<Classes />} />
           <Route path="attendances" element={<Attendances />} />
           <Route
@@ -61,30 +65,11 @@ export default function App() {
               </div>
             }
           />
-          <Route
-            path="circulars"
-            element={
-              <div className="p-6 text-center text-gray-500">
-                Circulars Management Coming Soon
-              </div>
-            }
-          />
-          <Route
-            path="staffs"
-            element={
-              <div className="p-6 text-center text-gray-500">
-                Staff Management Coming Soon
-              </div>
-            }
-          />
-          <Route
-            path="routine"
-            element={
-              <div className="p-6 text-center text-gray-500">
-                Routine Management Coming Soon
-              </div>
-            }
-          />
+          <Route path="circulars" element={<div className="p-6 text-center text-gray-500">Circulars Management Coming Soon</div>} />
+          <Route path="staffs" element={<Staffs />} />
+          <Route path="subjects-grades" element={<Subjects />} />
+          <Route path="timetable" element={<Timetable />} />
+          <Route path="routine" element={<div className="p-6 text-center text-gray-500">Routine Management Coming Soon</div>} />
         </Route>
       </Routes>
     </Router>

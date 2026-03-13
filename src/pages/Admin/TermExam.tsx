@@ -1,8 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { getClasses } from '../../lib/db';
 
 export default function TermExam() {
   const [view, setView] = useState<'menu' | 'add' | 'view'>('menu');
-  const grades = Array.from({ length: 13 }, (_, i) => `Grade ${String(i + 1).padStart(2, '0')}`);
+  const [classes, setClasses] = useState<any[]>([]);
+
+  useEffect(() => {
+    getClasses().then(setClasses);
+  }, []);
 
   if (view === 'menu') {
     return (
@@ -34,10 +39,22 @@ export default function TermExam() {
         </div>
         <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); alert('Term Exam Added'); setView('menu'); }}>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Select Grade</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Select Class</label>
             <select className="w-full border border-gray-300 rounded-md px-3 py-2 bg-white">
-              <option>Select Grade</option>
-              {grades.map(g => <option key={g} value={g}>{g}</option>)}
+              <option value="">Select Class</option>
+              {classes.length > 0 ? (
+                classes.map((cls) => (
+                  <option key={cls.id} value={cls.name}>
+                    {cls.name}
+                  </option>
+                ))
+              ) : (
+                Array.from({ length: 13 }, (_, i) => (
+                  <option key={i} value={`Grade ${String(i + 1).padStart(2, '0')}`}>
+                    Grade {String(i + 1).padStart(2, '0')}
+                  </option>
+                ))
+              )}
             </select>
           </div>
           <div>
@@ -65,7 +82,7 @@ export default function TermExam() {
           <button onClick={() => setView('menu')} className="mr-4 text-gray-600 hover:text-gray-900">
             ← Back
           </button>
-          <h2 className="text-xl font-bold text-gray-800">Manage Term Exams (Grade 01 - 13)</h2>
+          <h2 className="text-xl font-bold text-gray-800">Manage Term Exams</h2>
         </div>
         <div className="space-y-4">
           {/* Mock Data */}

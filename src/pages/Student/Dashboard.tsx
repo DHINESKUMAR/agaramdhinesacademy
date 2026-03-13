@@ -19,7 +19,7 @@ import {
   Download
 } from "lucide-react";
 
-import { getCourses, getZoomLinks, getYoutubeLinks, getFees, getAttendance, saveAttendance, getClassLinks, getHomework } from "../../lib/db";
+import { getCourses, getZoomLinks, getYoutubeLinks, getFees, getAttendance, saveAttendance, getClassLinks, getHomework, getStaffs, getTimeTable, getStudents, saveStudents } from "../../lib/db";
 
 export default function StudentDashboard() {
   const navigate = useNavigate();
@@ -33,11 +33,14 @@ export default function StudentDashboard() {
   const [attendance, setAttendance] = useState<any[]>([]);
   const [classLinks, setClassLinks] = useState<Record<string, string>>({});
   const [homework, setHomework] = useState<any[]>([]);
+  const [staffs, setStaffs] = useState<any[]>([]);
+  const [timetable, setTimetable] = useState<any[]>([]);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isInstallable, setIsInstallable] = useState(false);
 
   // Get student data from login
   const studentData = location.state;
+  const [enrolledClasses, setEnrolledClasses] = useState<string[]>(studentData?.enrolledClasses || []);
 
   useEffect(() => {
     if (!studentData) {
@@ -49,6 +52,8 @@ export default function StudentDashboard() {
       const allZoomLinks = await getZoomLinks();
       const allFees = await getFees();
       const allAttendance = await getAttendance();
+      const allStaffs = await getStaffs();
+      const allTimetable = await getTimeTable();
       
       setCourses(allCourses.filter((c: any) => c.grade === studentData.grade));
       setZoomLinks(allZoomLinks.filter((z: any) => z.grade === studentData.grade));
@@ -56,6 +61,8 @@ export default function StudentDashboard() {
       setFees(allFees.filter((f: any) => f.studentId === studentData.id || f.studentName === studentData.name));
       setAttendance(allAttendance.filter((a: any) => a.studentId === studentData.id));
       setClassLinks(await getClassLinks());
+      setStaffs(allStaffs);
+      setTimetable(allTimetable.filter((t: any) => t.grade === studentData.grade));
       
       const allHomework = await getHomework();
       setHomework(allHomework.filter((h: any) => h.grade === studentData.grade));
@@ -131,7 +138,7 @@ export default function StudentDashboard() {
   const navItems = [
     { id: "profile", name: "Profile", icon: <User size={24} /> },
     { id: "home", name: "Home", icon: <Home size={24} /> },
-    { id: "classes", name: "Classes", icon: <Book size={24} /> },
+    { id: "subjects", name: "My Subjects", icon: <Book size={24} /> },
     { id: "homework", name: "Homework", icon: <BookOpen size={24} /> },
     { id: "fees", name: "Fees", icon: <DollarSign size={24} /> },
     { id: "website", name: "Website", icon: <Globe size={24} /> },
@@ -142,7 +149,7 @@ export default function StudentDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 flex flex-col font-sans">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 flex flex-col font-sans relative">
       {/* Header */}
       <div className="bg-white/10 backdrop-blur-md border-b border-white/20 text-white p-4 flex items-center justify-between shadow-lg">
         <div className="flex items-center">
@@ -176,6 +183,17 @@ export default function StudentDashboard() {
         </div>
       </div>
 
+      {/* WhatsApp Floating Button */}
+      <a 
+        href={`https://wa.me/message/SLLBT6FLMFHVL1?text=${encodeURIComponent(`வணக்கம் அகரம் தினேஸ் ஐயா அவர்களே! எனது பிள்ளை பெயர்: ${displayName}, தரம்: ${studentData.grade}, மாவட்டம்: ${studentData.district || 'N/A'}`)}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed bottom-24 right-4 z-50 bg-green-500 text-white p-3 rounded-full shadow-lg hover:bg-green-600 transition-transform hover:scale-110 flex items-center justify-center"
+        title="Contact on WhatsApp"
+      >
+        <svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" className="css-i6dzq1"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+      </a>
+
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto p-4 bg-transparent pb-20">
         {activeTab !== "home" && (
@@ -201,13 +219,13 @@ export default function StudentDashboard() {
 
             <div className="grid grid-cols-2 gap-4">
               <div
-                onClick={() => setActiveTab("classes")}
+                onClick={() => setActiveTab("subjects")}
                 className="bg-white p-4 rounded-xl shadow-lg flex flex-col items-center justify-center cursor-pointer hover:scale-105 transition-transform"
               >
                 <div className="w-12 h-12 bg-pink-100 text-pink-600 rounded-full flex items-center justify-center mb-2">
                   <Book size={24} />
                 </div>
-                <span className="font-bold text-gray-800">Classes</span>
+                <span className="font-bold text-gray-800">My Subjects</span>
               </div>
 
               <div
@@ -261,6 +279,38 @@ export default function StudentDashboard() {
               </div>
             </div>
 
+            {/* Upcoming Subject Classes */}
+            {enrolledClasses.length > 0 && (
+              <div className="bg-white rounded-xl shadow-lg p-6 mt-4 border-l-4 border-pink-500">
+                <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                  <Video size={20} className="mr-2 text-pink-500" /> Upcoming Subject Classes
+                </h3>
+                <div className="space-y-3">
+                  {zoomLinks
+                    .filter(z => enrolledClasses.includes(z.subject))
+                    .sort((a, b) => new Date(a.datetime).getTime() - new Date(b.datetime).getTime())
+                    .slice(0, 3) // Show next 3
+                    .map(z => (
+                      <div key={z.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg border border-gray-100">
+                        <div>
+                          <p className="font-bold text-gray-800">{z.title} <span className="text-sm font-normal text-gray-500">({z.subject})</span></p>
+                          <p className="text-xs text-gray-500">{new Date(z.datetime).toLocaleString()}</p>
+                        </div>
+                        <button 
+                          onClick={() => handleJoinClass(z.link)}
+                          className="bg-pink-100 text-pink-700 px-4 py-2 rounded font-medium hover:bg-pink-200 text-sm"
+                        >
+                          Join
+                        </button>
+                      </div>
+                    ))}
+                  {zoomLinks.filter(z => enrolledClasses.includes(z.subject)).length === 0 && (
+                    <p className="text-gray-500 text-sm italic">No upcoming classes scheduled.</p>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Main Class Link Section */}
             {classLinks[studentData.grade] && (
               <div className="bg-white rounded-xl shadow-lg p-6 mt-4 border-l-4 border-blue-500">
@@ -279,40 +329,98 @@ export default function StudentDashboard() {
           </div>
         )}
 
-        {activeTab === "classes" && (
-          <div className="space-y-4">
+        {activeTab === "subjects" && (
+          <div className="space-y-6">
             <div className="bg-white rounded-xl shadow-lg p-6">
               <h2 className="text-2xl font-bold mb-2 text-gray-800 flex items-center">
-                <Book className="mr-2 text-pink-500" /> Classes
+                <Book className="mr-2 text-pink-500" /> My Subjects
               </h2>
-              <p className="text-gray-600 mb-6">Select your grade to join the class.</p>
+              <p className="text-gray-600 mb-6">Enroll in subjects and view class details.</p>
               
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                {Array.from({ length: 13 }, (_, i) => {
-                  const grade = `Grade ${String(i + 1).padStart(2, '0')}`;
-                  const link = classLinks[grade];
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {/* Find all unique subjects offered for this grade by any staff */}
+                {Array.from(new Set(staffs.flatMap(s => s.assignedClasses?.filter((c: any) => c.grade === studentData.grade).map((c: any) => c.subject) || []))).map((subjectName: any) => {
+                  const isEnrolled = enrolledClasses.includes(subjectName);
+                  const staffForSubject = staffs.filter(s => s.assignedClasses?.some((c: any) => c.grade === studentData.grade && c.subject === subjectName));
+                  const subjectTimetable = timetable.filter(t => t.subject === subjectName);
+                  const subjectZoomLinks = zoomLinks.filter(z => z.subject === subjectName);
+                  
                   return (
-                    <button
-                      key={grade}
-                      onClick={() => {
-                        if (link) {
-                          window.open(link, "_blank");
-                        }
-                      }}
-                      className={`p-4 rounded-xl shadow-sm border transition-all flex flex-col items-center justify-center ${
-                        link 
-                          ? "bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 hover:shadow-md hover:scale-105" 
-                          : "bg-gray-50 border-gray-200 opacity-70 cursor-not-allowed"
-                      }`}
-                      disabled={!link}
-                    >
-                      <Book size={24} className={`mb-2 ${link ? "text-blue-500" : "text-gray-400"}`} />
-                      <span className={`font-bold ${link ? "text-blue-900" : "text-gray-500"}`}>
-                        {grade}
-                      </span>
-                    </button>
+                    <div key={subjectName} className={`p-4 rounded-xl shadow-sm border transition-all ${isEnrolled ? 'bg-blue-50 border-blue-200' : 'bg-white border-gray-200'}`}>
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <h3 className="font-bold text-lg text-gray-800">{subjectName}</h3>
+                          <p className="text-sm text-gray-600 font-medium mt-1">
+                            Teacher(s): <span className="text-indigo-600">{staffForSubject.map(s => s.name).join(', ') || 'TBA'}</span>
+                          </p>
+                        </div>
+                        <button
+                          onClick={async () => {
+                            let newEnrolled = [...enrolledClasses];
+                            if (isEnrolled) {
+                              newEnrolled = newEnrolled.filter(s => s !== subjectName);
+                            } else {
+                              newEnrolled.push(subjectName);
+                            }
+                            setEnrolledClasses(newEnrolled);
+                            
+                            // Save to db
+                            const allStudents = await getStudents();
+                            const updatedStudents = allStudents.map((s: any) => 
+                              s.id === studentData.id ? { ...s, enrolledClasses: newEnrolled } : s
+                            );
+                            await saveStudents(updatedStudents);
+                          }}
+                          className={`px-3 py-1 rounded-full text-xs font-bold ${isEnrolled ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                        >
+                          {isEnrolled ? 'Enrolled' : 'Enroll'}
+                        </button>
+                      </div>
+                      
+                      <div className="space-y-2 text-sm text-gray-600">
+                        {isEnrolled && (
+                          <>
+                            <div className="mt-3 pt-3 border-t border-gray-200">
+                              <p className="font-semibold text-gray-800 mb-1">Timetable:</p>
+                              {subjectTimetable.length > 0 ? (
+                                <ul className="list-disc pl-4 space-y-1">
+                                  {subjectTimetable.map(t => (
+                                    <li key={t.id}>{t.day} {t.startTime} - {t.endTime}</li>
+                                  ))}
+                                </ul>
+                              ) : (
+                                <p className="text-gray-500 italic">No timetable set.</p>
+                              )}
+                            </div>
+                            
+                            <div className="mt-3 pt-3 border-t border-gray-200">
+                              <p className="font-semibold text-gray-800 mb-1">Upcoming Zoom Classes:</p>
+                              {subjectZoomLinks.length > 0 ? (
+                                <div className="space-y-2">
+                                  {subjectZoomLinks.map(z => (
+                                    <div key={z.id} className="bg-white p-2 rounded border border-blue-100">
+                                      <p className="font-medium text-blue-900">{z.title}</p>
+                                      <p className="text-xs text-gray-500">{new Date(z.datetime).toLocaleString()}</p>
+                                      <a href={z.link} target="_blank" rel="noreferrer" className="text-xs text-blue-600 hover:underline mt-1 inline-block">Join Link</a>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <p className="text-gray-500 italic">No upcoming classes.</p>
+                              )}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
                   );
                 })}
+                
+                {staffs.flatMap(s => s.assignedClasses?.filter((c: any) => c.grade === studentData.grade) || []).length === 0 && (
+                  <div className="col-span-full text-center py-8 text-gray-500">
+                    No subjects currently available for {studentData.grade}.
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -386,15 +494,15 @@ export default function StudentDashboard() {
               Recent Homework
             </h2>
             <div className="space-y-4">
-              {homework.length === 0 ? (
+              {homework.filter(h => enrolledClasses.includes(h.subject)).length === 0 ? (
                 <div className="text-center text-gray-500 py-8">
-                  No homework assigned yet.
+                  No homework assigned yet for your enrolled subjects.
                 </div>
               ) : (
-                homework.map((hw: any) => (
+                homework.filter(h => enrolledClasses.includes(h.subject)).map((hw: any) => (
                   <div key={hw.id} className="border border-gray-200 rounded-lg p-4">
                     <div className="flex justify-between items-start mb-2">
-                      <h3 className="font-bold text-[#1e3a8a] text-lg">{hw.title}</h3>
+                      <h3 className="font-bold text-[#1e3a8a] text-lg">{hw.title} <span className="text-sm font-normal text-gray-500">({hw.subject})</span></h3>
                       <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full font-medium">Assigned: {hw.date}</span>
                     </div>
                     <p className="text-gray-700 text-sm whitespace-pre-wrap">{hw.description}</p>

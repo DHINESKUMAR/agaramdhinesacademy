@@ -2,8 +2,8 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { signInWithGoogle, auth } from "../lib/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { GraduationCap, Globe, LogIn, Mail, Shield } from "lucide-react";
-import { getStudents } from "../lib/db";
+import { GraduationCap, Globe, LogIn, Mail, Shield, MessageCircle, Users } from "lucide-react";
+import { getStudents, getStaffs } from "../lib/db";
 
 export default function Home() {
   const navigate = useNavigate();
@@ -12,6 +12,10 @@ export default function Home() {
   const [adminUsername, setAdminUsername] = useState("");
   const [adminPassword, setAdminPassword] = useState("");
   const [showAdminLogin, setShowAdminLogin] = useState(false);
+  
+  const [staffUsername, setStaffUsername] = useState("");
+  const [staffPassword, setStaffPassword] = useState("");
+  const [showStaffLogin, setShowStaffLogin] = useState(false);
 
   const handleGoogleLogin = async () => {
     try {
@@ -45,7 +49,8 @@ export default function Home() {
             username: student.username,
             name: student.name,
             grade: student.grade,
-            rollNo: student.rollNo
+            rollNo: student.rollNo,
+            enrolledClasses: student.enrolledClasses || []
           }
         });
       } else {
@@ -60,13 +65,36 @@ export default function Home() {
     e.preventDefault();
     if (adminUsername === "agaramdhines" && adminPassword === "0756452527Dd") {
       try {
-        // Admin can login with a hardcoded email/password to keep it simple, or just bypass Firebase Auth for admin since it's hardcoded
         navigate("/admin");
       } catch (error) {
         alert("Invalid admin credentials");
       }
     } else {
       alert("Invalid admin credentials");
+    }
+  };
+
+  const handleStaffLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const staffs = await getStaffs();
+      const staff = staffs.find((s: any) => s.username === staffUsername && s.password === staffPassword);
+      
+      if (staff) {
+        navigate("/staff-dashboard", {
+          state: {
+            id: staff.id,
+            username: staff.username,
+            name: staff.name,
+            role: staff.role || "Teacher",
+            assignedClasses: staff.assignedClasses || []
+          }
+        });
+      } else {
+        alert("Invalid staff credentials");
+      }
+    } catch (error) {
+      alert("Login failed");
     }
   };
 
@@ -99,6 +127,15 @@ export default function Home() {
         >
           <LogIn size={24} />
           Zoom Class Registration
+        </button>
+
+        {/* WhatsApp Button */}
+        <button
+          onClick={() => window.open("https://wa.me/94778054232", "_blank")}
+          className="w-full py-4 bg-gradient-to-r from-green-500 to-green-600 text-white text-xl font-bold rounded-2xl shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all flex items-center justify-center gap-3"
+        >
+          <MessageCircle size={24} />
+          WhatsApp Us (0778054232)
         </button>
 
         {/* Student Login Section */}
@@ -135,20 +172,37 @@ export default function Home() {
           </form>
         </div>
 
-        {/* Admin Login */}
-        {!showAdminLogin ? (
-          <button
-            onClick={() => setShowAdminLogin(true)}
-            className="mt-8 flex items-center gap-2 text-sm font-medium text-gray-400 hover:text-gray-600 transition-colors"
-          >
-            <Shield size={16} />
-            Admin Login
-          </button>
-        ) : (
-          <div className="w-full max-w-xs bg-white p-6 rounded-2xl shadow-lg mt-8 border border-gray-100">
-            <h3 className="text-center font-bold text-gray-700 mb-4 flex items-center justify-center gap-2">
-              <Shield size={18} /> Admin Access
-            </h3>
+        {/* Admin and Staff Login Toggles */}
+        <div className="flex gap-4 mt-8">
+          {!showAdminLogin && (
+            <button
+              onClick={() => { setShowAdminLogin(true); setShowStaffLogin(false); }}
+              className="flex items-center gap-2 text-sm font-medium text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <Shield size={16} />
+              Admin Login
+            </button>
+          )}
+          {!showStaffLogin && (
+            <button
+              onClick={() => { setShowStaffLogin(true); setShowAdminLogin(false); }}
+              className="flex items-center gap-2 text-sm font-medium text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <Users size={16} />
+              Staff Login
+            </button>
+          )}
+        </div>
+
+        {/* Admin Login Form */}
+        {showAdminLogin && (
+          <div className="w-full max-w-xs bg-white p-6 rounded-2xl shadow-lg mt-4 border border-gray-100">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-bold text-gray-700 flex items-center gap-2">
+                <Shield size={18} /> Admin Access
+              </h3>
+              <button onClick={() => setShowAdminLogin(false)} className="text-gray-400 hover:text-gray-600 text-sm">Close</button>
+            </div>
             <form
               onSubmit={handleAdminLogin}
               className="flex flex-col space-y-3"
@@ -170,6 +224,43 @@ export default function Home() {
               <button
                 type="submit"
                 className="w-full py-2 bg-gray-800 text-white font-bold rounded-lg hover:bg-gray-900 transition-colors text-sm"
+              >
+                Login
+              </button>
+            </form>
+          </div>
+        )}
+
+        {/* Staff Login Form */}
+        {showStaffLogin && (
+          <div className="w-full max-w-xs bg-white p-6 rounded-2xl shadow-lg mt-4 border border-gray-100">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-bold text-gray-700 flex items-center gap-2">
+                <Users size={18} /> Staff Access
+              </h3>
+              <button onClick={() => setShowStaffLogin(false)} className="text-gray-400 hover:text-gray-600 text-sm">Close</button>
+            </div>
+            <form
+              onSubmit={handleStaffLogin}
+              className="flex flex-col space-y-3"
+            >
+              <input
+                type="text"
+                placeholder="Staff Username"
+                value={staffUsername}
+                onChange={(e) => setStaffUsername(e.target.value)}
+                className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 bg-gray-50 text-center text-sm"
+              />
+              <input
+                type="password"
+                placeholder="Staff Password"
+                value={staffPassword}
+                onChange={(e) => setStaffPassword(e.target.value)}
+                className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 bg-gray-50 text-center text-sm"
+              />
+              <button
+                type="submit"
+                className="w-full py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition-colors text-sm"
               >
                 Login
               </button>

@@ -1,25 +1,27 @@
 import React, { useState, useEffect } from 'react';
-import { getCourses, saveCourses } from '../../lib/db';
+import { getCourses, saveCourses, getClasses } from '../../lib/db';
 
 export default function Courses() {
   const [view, setView] = useState<'menu' | 'add' | 'view'>('menu');
   const [courses, setCourses] = useState<any[]>([]);
-  const grades = Array.from({ length: 13 }, (_, i) => `Grade ${String(i + 1).padStart(2, '0')}`);
+  const [classes, setClasses] = useState<any[]>([]);
+  const [filterClass, setFilterClass] = useState<string>("");
 
   useEffect(() => {
     getCourses().then(setCourses);
+    getClasses().then(setClasses);
   }, [view]);
 
   const [formData, setFormData] = useState({
-    grade: 'Grade 01',
+    grade: '',
     title: '',
     link: ''
   });
 
   const handleAddCourse = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.title || !formData.link) {
-      alert("Title and Link are required!");
+    if (!formData.title || !formData.link || !formData.grade) {
+      alert("Class, Title and Link are required!");
       return;
     }
     const newCourse = { id: Date.now().toString(), ...formData };
@@ -27,7 +29,7 @@ export default function Courses() {
     setCourses(updatedCourses);
     await saveCourses(updatedCourses);
     alert('Course Added');
-    setFormData({ grade: 'Grade 01', title: '', link: '' });
+    setFormData({ grade: '', title: '', link: '' });
     setView('menu');
   };
 
@@ -69,14 +71,26 @@ export default function Courses() {
         </div>
         <form className="space-y-4" onSubmit={handleAddCourse}>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Select Grade</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Select Class</label>
             <select 
               value={formData.grade}
               onChange={(e) => setFormData({...formData, grade: e.target.value})}
               className="w-full border border-gray-300 rounded-md px-3 py-2 bg-white"
             >
-              <option>Select Grade</option>
-              {grades.map(g => <option key={g} value={g}>{g}</option>)}
+              <option value="">Select Class</option>
+              {classes.length > 0 ? (
+                classes.map((cls) => (
+                  <option key={cls.id} value={cls.name}>
+                    {cls.name}
+                  </option>
+                ))
+              ) : (
+                Array.from({ length: 13 }, (_, i) => (
+                  <option key={i} value={`Grade ${String(i + 1).padStart(2, '0')}`}>
+                    Grade {String(i + 1).padStart(2, '0')}
+                  </option>
+                ))
+              )}
             </select>
           </div>
           <div>
@@ -106,19 +120,48 @@ export default function Courses() {
   }
 
   if (view === 'view') {
+    const filteredCourses = filterClass 
+      ? courses.filter(c => c.grade === filterClass)
+      : courses;
+
     return (
       <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-6">
-        <div className="flex items-center mb-6">
-          <button onClick={() => setView('menu')} className="mr-4 text-gray-600 hover:text-gray-900">
-            ← Back
-          </button>
-          <h2 className="text-xl font-bold text-gray-800">Manage Courses (Grade 01 - 13)</h2>
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center">
+            <button onClick={() => setView('menu')} className="mr-4 text-gray-600 hover:text-gray-900">
+              ← Back
+            </button>
+            <h2 className="text-xl font-bold text-gray-800">Manage Courses</h2>
+          </div>
+          <div className="flex items-center space-x-2">
+            <span className="text-sm text-gray-600">Filter by Class:</span>
+            <select
+              value={filterClass}
+              onChange={(e) => setFilterClass(e.target.value)}
+              className="border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:ring-blue-500 focus:border-blue-500 bg-white"
+            >
+              <option value="">All Classes</option>
+              {classes.length > 0 ? (
+                classes.map((cls) => (
+                  <option key={cls.id} value={cls.name}>
+                    {cls.name}
+                  </option>
+                ))
+              ) : (
+                Array.from({ length: 13 }, (_, i) => (
+                  <option key={i} value={`Grade ${String(i + 1).padStart(2, '0')}`}>
+                    Grade {String(i + 1).padStart(2, '0')}
+                  </option>
+                ))
+              )}
+            </select>
+          </div>
         </div>
         <div className="space-y-4">
-          {courses.length === 0 ? (
+          {filteredCourses.length === 0 ? (
             <div className="text-center text-gray-500 py-8">No courses found.</div>
           ) : (
-            courses.map(course => (
+            filteredCourses.map(course => (
               <div key={course.id} className="border border-gray-200 rounded-lg p-4 flex justify-between items-center">
                 <div>
                   <h3 className="font-bold text-[#1e3a8a]">{course.grade} - {course.title}</h3>

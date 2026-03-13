@@ -1,24 +1,28 @@
 import React, { useState, useEffect } from "react";
-import { getHomework, saveHomework } from "../../lib/db";
+import { getHomework, saveHomework, getSubjects } from "../../lib/db";
 
 export default function Homework() {
   const [view, setView] = useState<"menu" | "add" | "view">("menu");
   const [homeworkList, setHomeworkList] = useState<any[]>([]);
+  const [subjects, setSubjects] = useState<any[]>([]);
   const [selectedGrade, setSelectedGrade] = useState("");
+  const [selectedSubject, setSelectedSubject] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
 
   useEffect(() => {
     getHomework().then(setHomeworkList);
+    getSubjects().then(setSubjects);
   }, [view]);
 
   const handleAddHomework = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedGrade || !title) return;
+    if (!selectedGrade || !selectedSubject || !title) return;
 
     const newHomework = {
       id: Date.now().toString(),
       grade: selectedGrade,
+      subject: selectedSubject,
       title,
       description,
       date: new Date().toISOString().split('T')[0]
@@ -30,6 +34,7 @@ export default function Homework() {
     
     alert("Homework added successfully!");
     setSelectedGrade("");
+    setSelectedSubject("");
     setTitle("");
     setDescription("");
     setView("menu");
@@ -90,6 +95,21 @@ export default function Homework() {
                   Grade {String(i + 1).padStart(2, '0')}
                 </option>
               ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Subject
+            </label>
+            <select 
+              value={selectedSubject}
+              onChange={(e) => setSelectedSubject(e.target.value)}
+              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+              required
+            >
+              <option value="">Select Subject</option>
+              {subjects.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}
             </select>
           </div>
 
@@ -180,7 +200,7 @@ export default function Homework() {
             .map(hw => (
               <div key={hw.id} className="border border-gray-200 rounded-lg p-4 flex justify-between items-center">
                 <div>
-                  <h3 className="font-bold text-[#1e3a8a]">{hw.title}</h3>
+                  <h3 className="font-bold text-[#1e3a8a]">{hw.title} <span className="text-sm font-normal text-gray-500">({hw.subject})</span></h3>
                   <p className="text-sm text-gray-500">{hw.grade} | Assigned: {hw.date}</p>
                   <p className="text-sm text-gray-700 mt-1">{hw.description}</p>
                 </div>

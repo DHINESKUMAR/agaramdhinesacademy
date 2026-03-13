@@ -83,8 +83,26 @@ export const saveSchedule = (schedule: any) => saveData('schedule', schedule);
 export const getClassLinks = () => getData('classLinks', {});
 export const saveClassLinks = (links: any) => saveData('classLinks', links);
 
+export const getClasses = () => getData('classes', []);
+export const saveClasses = (classes: any) => saveData('classes', classes);
+
 export const getHomework = () => getData('homework', []);
 export const saveHomework = (homework: any) => saveData('homework', homework);
+
+export const getStaffs = () => getData('staffs', []);
+export const saveStaffs = (staffs: any) => saveData('staffs', staffs);
+
+export const getStaffAttendance = () => getData('staffAttendance', []);
+export const saveStaffAttendance = (attendance: any) => saveData('staffAttendance', attendance);
+
+export const getSubjects = () => getData('subjects', []);
+export const saveSubjects = (subjects: any) => saveData('subjects', subjects);
+
+export const getGrades = () => getData('grades', []);
+export const saveGrades = (grades: any) => saveData('grades', grades);
+
+export const getTimeTable = () => getData('timetable', []);
+export const saveTimeTable = (timetable: any) => saveData('timetable', timetable);
 
 export const initDB = async () => {
   const students = await getStudents();

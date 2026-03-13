@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from "react";
-import { getStudents, saveStudents } from "../../lib/db";
+import { getStudents, saveStudents, getClasses } from "../../lib/db";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { secondaryAuth } from "../../lib/firebase";
 
 export default function Students() {
   const [view, setView] = useState<"menu" | "add" | "view">("menu");
   const [students, setStudents] = useState<any[]>([]);
+  const [classes, setClasses] = useState<any[]>([]);
+  const [filterClass, setFilterClass] = useState<string>("");
 
   useEffect(() => {
     getStudents().then(setStudents);
+    getClasses().then(setClasses);
   }, [view]);
 
   // Form state
@@ -118,12 +121,20 @@ export default function Students() {
               onChange={(e) => setFormData({...formData, grade: e.target.value})}
               className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
             >
-              <option>Select Class</option>
-              {Array.from({ length: 13 }, (_, i) => (
-                <option key={i} value={`Grade ${String(i + 1).padStart(2, '0')}`}>
-                  Grade {String(i + 1).padStart(2, '0')}
-                </option>
-              ))}
+              <option value="">Select Class</option>
+              {classes.length > 0 ? (
+                classes.map((cls) => (
+                  <option key={cls.id} value={cls.name}>
+                    {cls.name}
+                  </option>
+                ))
+              ) : (
+                Array.from({ length: 13 }, (_, i) => (
+                  <option key={i} value={`Grade ${String(i + 1).padStart(2, '0')}`}>
+                    Grade {String(i + 1).padStart(2, '0')}
+                  </option>
+                ))
+              )}
             </select>
           </div>
 
@@ -297,23 +308,52 @@ export default function Students() {
   }
 
   if (view === "view") {
+    const filteredStudents = filterClass 
+      ? students.filter(s => s.grade === filterClass)
+      : students;
+
     return (
       <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-md p-6">
-        <div className="flex items-center mb-6">
-          <button
-            onClick={() => setView("menu")}
-            className="mr-4 text-gray-600 hover:text-gray-900"
-          >
-            ← Back
-          </button>
-          <h2 className="text-xl font-bold text-gray-800">View Students</h2>
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center">
+            <button
+              onClick={() => setView("menu")}
+              className="mr-4 text-gray-600 hover:text-gray-900"
+            >
+              ← Back
+            </button>
+            <h2 className="text-xl font-bold text-gray-800">View Students</h2>
+          </div>
+          <div className="flex items-center space-x-2">
+            <span className="text-sm text-gray-600">Filter by Class:</span>
+            <select
+              value={filterClass}
+              onChange={(e) => setFilterClass(e.target.value)}
+              className="border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:ring-blue-500 focus:border-blue-500 bg-white"
+            >
+              <option value="">All Classes</option>
+              {classes.length > 0 ? (
+                classes.map((cls) => (
+                  <option key={cls.id} value={cls.name}>
+                    {cls.name}
+                  </option>
+                ))
+              ) : (
+                Array.from({ length: 13 }, (_, i) => (
+                  <option key={i} value={`Grade ${String(i + 1).padStart(2, '0')}`}>
+                    Grade {String(i + 1).padStart(2, '0')}
+                  </option>
+                ))
+              )}
+            </select>
+          </div>
         </div>
         
         <div className="space-y-4">
-          {students.length === 0 ? (
+          {filteredStudents.length === 0 ? (
             <div className="text-center text-gray-500 py-8">No students found.</div>
           ) : (
-            students.map(student => (
+            filteredStudents.map(student => (
               <div key={student.id} className="border border-gray-200 rounded-lg p-4 flex justify-between items-center">
                 <div className="flex items-center space-x-4">
                   <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-500 font-bold">
