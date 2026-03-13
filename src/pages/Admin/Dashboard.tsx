@@ -77,6 +77,10 @@ export default function AdminDashboard() {
     { name: "Courses", path: "/admin/courses", icon: <Link size={18} /> },
     { name: "YouTube", path: "/admin/youtube", icon: <YoutubeIcon size={18} /> },
     { name: "Routine", path: "/admin/routine", icon: <Clock size={18} /> },
+    { name: "AI Image", path: "/admin/ai-image", icon: <ImageIcon size={18} /> },
+    { name: "AI Voice", path: "/admin/ai-voice", icon: <Mic size={18} /> },
+    { name: "AI Video", path: "/admin/ai-video", icon: <Video size={18} /> },
+    { name: "AI Search", path: "/admin/ai-search", icon: <Search size={18} /> },
   ];
 
   return (

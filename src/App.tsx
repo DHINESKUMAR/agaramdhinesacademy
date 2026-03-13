@@ -1,4 +1,8 @@
-import { useState, useEffect } from "react"; // இதைச் சேர்த்துள்ளேன்
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
 import WebView from "./pages/WebView";
@@ -19,24 +23,16 @@ import Subjects from "./pages/Admin/Subjects";
 import Timetable from "./pages/Admin/Timetable";
 import StudentDashboard from "./pages/Student/Dashboard";
 import StaffDashboard from "./pages/Staff/Dashboard";
+import ImageEditor from "./pages/AI/ImageEditor";
+import VoiceApp from "./pages/AI/VoiceApp";
+import VideoGenerator from "./pages/AI/VideoGenerator";
+import SearchGrounding from "./pages/AI/SearchGrounding";
 import { initDB } from "./lib/db";
 
 // Initialize mock database
 initDB();
 
 export default function App() {
-  // --- சேர்த்துள்ள மாற்றம் ஆரம்பம் ---
-  const [isClient, setIsClient] = useState(false);
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  if (!isClient) {
-    return null; // பிரவுசர் லோட் ஆகும் வரை திரையில் எதுவும் காட்டாது (வெள்ளை திரை வராது)
-  }
-  // --- சேர்த்துள்ள மாற்றம் முடிவு ---
-
   return (
     <Router>
       <Routes>
@@ -51,10 +47,15 @@ export default function App() {
           <Route path="homework" element={<Homework />} />
           <Route path="fees" element={<Fees />} />
           <Route path="settings" element={<Settings />} />
+          <Route path="ai-image" element={<ImageEditor />} />
+          <Route path="ai-voice" element={<VoiceApp />} />
+          <Route path="ai-video" element={<VideoGenerator />} />
+          <Route path="ai-search" element={<SearchGrounding />} />
           <Route path="courses" element={<Courses />} />
           <Route path="term-exam" element={<TermExam />} />
           <Route path="live-classes" element={<LiveClasses />} />
           <Route path="youtube" element={<Youtube />} />
+          {/* Placeholders for other routes */}
           <Route path="classes" element={<Classes />} />
           <Route path="attendances" element={<Attendances />} />
           <Route
